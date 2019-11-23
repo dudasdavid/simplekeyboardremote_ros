@@ -7,6 +7,7 @@ import rospy
 from std_msgs.msg import String
 import threading
 import sys
+import time
 
 import curses
 
@@ -41,9 +42,11 @@ class killableThread(threading.Thread):
         self.killed = True
 
 strBuffer = "Init"
+timeStamp = 0
 
 def keyboardInput():
     global strBuffer
+    global timeStamp
 
     stdscr = curses.initscr()
     curses.cbreak()
@@ -60,27 +63,34 @@ def keyboardInput():
         if key == curses.KEY_UP:
             stdscr.addstr(2, 0, "Up   ")
             strBuffer = "Up"
+            timeStamp = time.time()
         elif key == curses.KEY_DOWN:
             stdscr.addstr(2, 0, "Down ")
             strBuffer = "Down"
+            timeStamp = time.time()
         elif key == curses.KEY_LEFT:
             stdscr.addstr(2, 0, "Left ")
             strBuffer = "Left"
+            timeStamp = time.time()
         elif key == curses.KEY_RIGHT:
             stdscr.addstr(2, 0, "Right")
             strBuffer = "Right"
+            timeStamp = time.time()
 
     curses.endwin()
 
 def talker():
     global strBuffer
+    global timeStamp
+
     pub = rospy.Publisher('chatter', String, queue_size=10)
     rospy.init_node('talker', anonymous=True)
     rate = rospy.Rate(10) # 10hz
     while not rospy.is_shutdown():
         #hello_str = "hello world %s" % rospy.get_time()
         hello_str = strBuffer
-        strBuffer = "None"
+        if (time.time()-timeStamp > 0.5):
+            strBuffer = "None"
         rospy.loginfo(hello_str)
         pub.publish(hello_str)
         rate.sleep()
